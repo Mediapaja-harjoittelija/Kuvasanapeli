@@ -11,6 +11,8 @@ public class PictureWords : MonoBehaviour {
 	public string[][] categoryWordLists;
 	public Object[][] categoryPictureObjectLists;
 	public Texture2D[][] categoryPictureTextureLists;
+	public Object[] categoryLogoObjects;
+	public Texture2D[] categoryLogoTextures;
 
 	public Button answerButtonA;
 	public Button answerButtonB;
@@ -56,6 +58,7 @@ public class PictureWords : MonoBehaviour {
 	public GameObject dropDownCategories;
 	public Text dropDownLabelText;
 	public Text categoryTextlabel;
+	public GameObject categoryLogo;
 
 	public int categoryValue;
 
@@ -82,9 +85,14 @@ public class PictureWords : MonoBehaviour {
 	public GameObject slideEffectSelectCategory;
 	public GameObject slideEffectEndPanel;
 
+	public Button[] selectCategoryPanelButtons;
+	public Button[] selectGamePanelButtons;
+
 	// Use this for initialization
 	void Start () 
 	{
+		selectCategoryPanelButtons = categoryPanel.GetComponentsInChildren<Button> ();
+		selectGamePanelButtons = selectGamePanel.GetComponentsInChildren<Button> ();
 
 		// Get the current time in seconds. Source: http://answers.unity3d.com/questions/417939/how-can-i-get-the-time-since-the-epoch-date-in-uni.html
 		System.DateTime epochStart = new System.DateTime(1970, 1, 1, 0, 0, 0, System.DateTimeKind.Utc);
@@ -109,6 +117,32 @@ public class PictureWords : MonoBehaviour {
 		GenerateCategoryArrays();
 		gameMode = "PictureGame";
 		SetSettings ();
+	}
+
+	public void DisableCategorySelectPanelButtons()
+	{
+		foreach (Button buttons in selectCategoryPanelButtons)
+			buttons.interactable = false;
+		dropDownCategories.GetComponent<Dropdown> ().interactable = false;
+	}
+
+	public void EnableCategorySelectPanelButtons()
+	{
+		foreach (Button buttons in selectCategoryPanelButtons)
+			buttons.interactable = true;
+		dropDownCategories.GetComponent<Dropdown> ().interactable = true;
+	}
+
+	public void DisableGameSelectPanelButtons()
+	{
+		foreach (Button buttons in selectGamePanelButtons)
+			buttons.interactable = false;
+	}
+
+	public void EnableGameSelectPanelButtons()
+	{
+		foreach (Button buttons in selectGamePanelButtons)
+			buttons.interactable = true;
 	}
 
 	public void SlideSelectGamePanelOn()
@@ -147,34 +181,38 @@ public class PictureWords : MonoBehaviour {
 	{
 		RectTransform panelRectTransform = slidePanel.GetComponent<RectTransform> ();
 		float startValue = 0f;
-		float endValue = 60f;
-		float increment = 1f;
-		float timeToWait = 0.01f;
+		float endValue = Screen.width;
+		float increment = 5f;
+		//float timeToWait = 0.01f;
 
 		while (startValue < endValue) {
 			startValue = startValue + increment;
-			panelRectTransform.offsetMin = new Vector2 (-startValue * 10f, 0f);
-			panelRectTransform.offsetMax = new Vector2 (-startValue * 10f, 0f);
-			yield return new WaitForSeconds (timeToWait);
+			panelRectTransform.offsetMin = new Vector2 (-startValue, 0f);
+			panelRectTransform.offsetMax = new Vector2 (-startValue, 0f);
+			yield return new WaitForEndOfFrame ();
+			//yield return new WaitForSeconds (timeToWait);
 			//Debug.Log ("Value: " + startValue.ToString ());
 		}
+		//yield return null;
 	}
 
 	IEnumerator SlideEffectOn(GameObject slidePanel)
 	{
 		RectTransform panelRectTransform = slidePanel.GetComponent<RectTransform> ();
-		float startValue = 60f;
+		float startValue = Screen.width;
 		float endValue = 0f;
-		float increment = 1f;
-		float timeToWait = 0.01f;
+		float increment = 5f;
+		//float timeToWait = 0.01f;
 
 		while (startValue > endValue) {
 			startValue = startValue - increment;
-			panelRectTransform.offsetMin = new Vector2 (-startValue * 10f, 0f);
-			panelRectTransform.offsetMax = new Vector2 (-startValue * 10f, 0f);
-			yield return new WaitForSeconds (timeToWait);
+			panelRectTransform.offsetMin = new Vector2 (-startValue, 0f);
+			panelRectTransform.offsetMax = new Vector2 (-startValue, 0f);
+			yield return new WaitForEndOfFrame ();
+			//yield return new WaitForSeconds (timeToWait);
 			//Debug.Log ("Value: " + startValue.ToString ());
 		}
+		//yield return null;
 	}
 		
 	public void PlayButtonSound()
@@ -211,7 +249,7 @@ public class PictureWords : MonoBehaviour {
 			tmp++;
 		}
 		dropDownCategories.GetComponent<Dropdown> ().RefreshShownValue ();
-		DropdownValueChanged ();
+		//DropdownValueChanged ();
 	}
 
 	void GenerateCategoryArrays()
@@ -219,9 +257,13 @@ public class PictureWords : MonoBehaviour {
 		categoryWordLists = new string[folderList.Length][];
 		categoryPictureObjectLists = new Object[folderList.Length][];
 		categoryPictureTextureLists = new Texture2D[folderList.Length][];
+		categoryLogoObjects = new Object[folderList.Length];
+		categoryLogoTextures = new Texture2D[folderList.Length];
 		int tmpA = 0;
 		foreach (string category in folderList) {
 			categoryPictureObjectLists[tmpA] = Resources.LoadAll("Textures/" + folderList[tmpA].ToString(), typeof(Texture));
+			categoryLogoObjects = Resources.LoadAll("Textures/Logot/", typeof(Texture));
+			categoryLogoTextures [tmpA] = (Texture2D)categoryLogoObjects[tmpA];
 			categoryWordLists[tmpA] = new string[categoryPictureObjectLists[tmpA].Length];
 			categoryPictureTextureLists[tmpA] = new Texture2D[categoryPictureObjectLists[tmpA].Length];
 			int tmpB = 0;
@@ -272,6 +314,7 @@ public class PictureWords : MonoBehaviour {
 		}
 		GenerateQuestionList ();
 		GenerateNewQuestion ();
+		SetButtonInteractable (true);
 	}
 		
 	void SetCheckAnswerText(bool value)
@@ -290,7 +333,14 @@ public class PictureWords : MonoBehaviour {
 	public void DropdownValueChanged()
 	{
 		categoryValue = dropDownCategories.GetComponent<Dropdown> ().value;
-		categoryTextlabel.text = folderList [categoryValue].ToString ();
+		try { 
+			categoryLogo.GetComponent<RawImage>().texture = categoryLogoTextures [categoryValue];
+			categoryTextlabel.text = "";
+		}
+		catch {
+			categoryTextlabel.text = folderList [categoryValue].ToString ();
+			categoryLogo.SetActive (false);
+		}
 	}
 
 	public void ButtonActivityForAD(Button pressedButton, GameObject answer, bool correctAnswer)
@@ -445,12 +495,13 @@ public class PictureWords : MonoBehaviour {
 			GenerateNewQuestion ();
 			SetButtonInteractable (true);
 		} else {
+			SetButtonInteractable (false);
 			endPanel.SetActive (true);
 			SlideEndPanelOn ();
 			endScoreText.text = "Pisteet: " + score.ToString () + " / " + categoryPictureObjectLists [categoryValue].Length.ToString ();
 			int resultPercentage = EndScorePercentage (score, categoryPictureObjectLists [categoryValue].Length);
 			SetGameEndText (resultPercentage);
-			SetButtonInteractable (true);
+			//SetButtonInteractable (true);
 			gameIsStarted = false;
 			closeButton.SetActive (gameIsStarted);
 		}
